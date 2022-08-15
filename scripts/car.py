@@ -1,0 +1,123 @@
+from node import DirState
+from vector import Vector
+from geometry_msgs.msg import PoseStamped, PointStamped
+from ackermann_msgs.msg import AckermannDriveStamped
+from typing import List
+from utils import refactor_angle, refactor_angle2
+from visualization_msgs.msg import Marker
+import rospy
+from rrt import RRT, Route
+from tf.transformations import euler_from_quaternion
+from nav_msgs.msg import Path
+import numpy as np
+from map import Map
+
+
+class Car:
+    MAX_ANGLE = .3
+    SPEED = .3
+
+    def __init__(self, pos, dir):
+        # type: (Vector, float) -> None
+
+        self.map = Map()
+        self.pos = pos
+        self.dir = dir
+        self.path = []  # type: List[Route]
+        self.rate = rospy.Rate(10)
+        self.msg = AckermannDriveStamped()
+        self.pub = rospy.Publisher('/ackermann_cmd_mux/input/navigation',
+                                   AckermannDriveStamped,
+                                   queue_size=1)
+        self.pub_point = rospy.Publisher("/path", Path, queue_size=1)
+        self.msg_point = Path()
+        self.msg_point.header.frame_id = "hector_map"
+        self.pub_marker_points = rospy.Publisher("/marker_point",
+                                                 Marker,
+                                                 queue_size=1)
+        self.pub_marker_lines = rospy.Publisher("/marker_line",
+                                                Marker,
+                                                queue_size=1)
+
+        self.rrt = None
+
+    def __hector_cb(self, msg):
+        # type: (PoseStamped) -> None
+        self.pos.update(msg.pose)
+        o = msg.pose.orientation
+        _, _, yaw = euler_from_quaternion([o.x, o.y, o.z, o.w])
+        self.dir = refactor_angle(np.rad2deg(yaw))  # type: ignore
+        #print(str(self.map_x)+" "+str(self.map_y))
+
+        # print(self.pos, self.dir)
+
+        if self.rrt:
+            points, lines = self.rrt.generate_marker()
+            self.pub_marker_lines.publish(lines)
+            self.pub_marker_points.publish(points)
+            # self.pub_marker.publish(points)
+
+    def __clicked_cb(self, msg):
+        # type: (PointStamped) -> None
+        clicked_pos = Vector(msg.point.x, msg.point.y, msg.point.z)
+        val = self.map.get_map_coord(clicked_pos)
+        if val == 100:
+            print("this pos is already obstacle. Try another !!!")
+            return
+        self.rrt = RRT(self.pos, self.dir)
+        route_list = self.rrt.get_vector_list(clicked_pos, self.map,
+                                              self.msg_point)
+        self.path = route_list
+        self.map.set_path(route_list, self.msg_point)
+
+    def subscribe(self):
+        self.map.subscribe()
+
+        rospy.Subscriber('/hector/slam_out_pose',
+                         PoseStamped,
+                         self.__hector_cb,
+                         queue_size=1)
+        rospy.Subscriber('/clicked_point',
+                         PointStamped,
+                         self.__clicked_cb,
+                         queue_size=1)
+
+    def __normalize_angle(self, angle):
+        a = np.exp(angle / 3) - 1  # type: ignore
+        # print("angle: " + str(a))
+        return a
+
+    def __navigate(self):
+
+        if not self.path:
+            return
+
+        route = self.path[0]
+        target = route.pos
+
+        dir_angle = self.dir if route.dir is DirState.FORWARD else self.dir - 180
+
+        dif = target - self.pos
+        print("nav - remaining length => ", dif.length)
+        dif_angle = dif.angle - dir_angle
+        # dif_angle = refactor_angle2(dif_angle)
+        dif_angle = refactor_angle(dif_angle)
+        dif_angle = np.deg2rad(dif_angle)  # type: ignore
+        print("nav - angle => ", dif_angle)
+
+        self.msg.drive.speed = self.SPEED * route.dir.value
+        self.msg.drive.steering_angle = self.__normalize_angle(
+            dif_angle) * route.dir.value
+
+        if dif.length < 0.15:
+            self.path.pop(0)
+            return
+        self.pub.publish(self.msg)
+
+    def main(self):
+
+        while not rospy.is_shutdown():
+
+            self.__navigate()
+            self.pub_point.publish(self.msg_point)
+            self.rate.sleep()
