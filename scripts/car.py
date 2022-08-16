@@ -3,7 +3,7 @@ from vector import Vector
 from geometry_msgs.msg import PoseStamped, PointStamped
 from ackermann_msgs.msg import AckermannDriveStamped
 from typing import List
-from utils import refactor_angle, refactor_angle2
+from utils import normalize_angle
 from visualization_msgs.msg import Marker
 import rospy
 from rrt import RRT, Route
@@ -11,6 +11,7 @@ from tf.transformations import euler_from_quaternion
 from nav_msgs.msg import Path
 import numpy as np
 from map import Map
+from math import pi
 
 
 class Car:
@@ -39,22 +40,25 @@ class Car:
                                                 Marker,
                                                 queue_size=1)
 
+        self.pub_marker_random_points = rospy.Publisher("/random_point",
+                                                 Marker,
+                                                 queue_size=1)
+
         self.rrt = None
+
 
     def __hector_cb(self, msg):
         # type: (PoseStamped) -> None
         self.pos.update(msg.pose)
         o = msg.pose.orientation
         _, _, yaw = euler_from_quaternion([o.x, o.y, o.z, o.w])
-        self.dir = refactor_angle(np.rad2deg(yaw))  # type: ignore
-        #print(str(self.map_x)+" "+str(self.map_y))
-
-        # print(self.pos, self.dir)
+        self.dir = normalize_angle(yaw)
 
         if self.rrt:
-            points, lines = self.rrt.generate_marker()
+            points, lines, random = self.rrt.generate_marker()
             self.pub_marker_lines.publish(lines)
             self.pub_marker_points.publish(points)
+            self.pub_marker_random_points.publish(random)
             # self.pub_marker.publish(points)
 
     def __clicked_cb(self, msg):
@@ -83,7 +87,7 @@ class Car:
                          queue_size=1)
 
     def __normalize_angle(self, angle):
-        a = np.exp(angle / 3) - 1  # type: ignore
+        a = np.exp(angle / 2) - 1  # type: ignore
         # print("angle: " + str(a))
         return a
 
@@ -95,21 +99,21 @@ class Car:
         route = self.path[0]
         target = route.pos
 
-        dir_angle = self.dir if route.dir is DirState.FORWARD else self.dir - 180
+        dir_angle = self.dir if route.dir is DirState.FORWARD else self.dir - pi
 
         dif = target - self.pos
+        print("direction => ", route.dir)
         print("nav - remaining length => ", dif.length)
         dif_angle = dif.angle - dir_angle
         # dif_angle = refactor_angle2(dif_angle)
-        dif_angle = refactor_angle(dif_angle)
-        dif_angle = np.deg2rad(dif_angle)  # type: ignore
+        dif_angle = normalize_angle(dif_angle)
         print("nav - angle => ", dif_angle)
 
         self.msg.drive.speed = self.SPEED * route.dir.value
         self.msg.drive.steering_angle = self.__normalize_angle(
             dif_angle) * route.dir.value
 
-        if dif.length < 0.15:
+        if dif.length < 0.20:
             self.path.pop(0)
             return
         self.pub.publish(self.msg)
@@ -119,5 +123,5 @@ class Car:
         while not rospy.is_shutdown():
 
             self.__navigate()
-            self.pub_point.publish(self.msg_point)
+            # self.pub_point.publish(self.msg_point)
             self.rate.sleep()

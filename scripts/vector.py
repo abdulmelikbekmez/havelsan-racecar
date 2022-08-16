@@ -1,5 +1,6 @@
 from geometry_msgs.msg import Pose, Point
 import numpy as np
+from math import cos, sin
 
 
 class Vector:
@@ -18,10 +19,9 @@ class Vector:
     @classmethod
     def from_polar(cls, length, angle):
         # type: (float, float) -> Vector
-        x = np.cos(np.deg2rad(angle))  # type: ignore
-        y = np.sin(np.deg2rad(angle))  # type: ignore
-        z = 0
-        return cls(x, y, z) * length
+        x = cos(angle)
+        y = sin(angle)
+        return cls(x, y, 0) * length
 
     def generate_point(self):
         # type: () -> Point
@@ -61,12 +61,15 @@ class Vector:
 
         raise Exception("Unsupported Operand!!")
 
+    def angle_to(self, other):
+        # type: (Vector) -> float
+        return other.angle - self.angle
+
     @property
     def angle(self):
         # type: () -> float
-        return np.rad2deg(np.arctan2(float(self.y),
-                                     float(self.x)))  #type:ignore
-
+        return np.arctan2(self.y,self.x)  #type:ignore
+    
     @property
     def length(self):
         # type: () -> float

@@ -1,21 +1,9 @@
-def refactor_angle(angle):
-    # type: (float) -> float
-    if angle < -180:
-        angle += 360
-    elif angle > 180:
-        angle -= 360
-    return angle
+from math import pi
 
-def refactor_angle2(angle):
+def normalize_angle(angle):
     # type: (float) -> float
-    if -90 > angle >= -180:
-        angle += 180
-        angle *=-1
-    elif angle < -180:
-        angle += 180
-    elif 90 < angle <= 180:
-        angle -= 180
-        angle *= -1
-    elif angle > 180:
-        angle -= 180
+    if angle < -pi:
+        angle += 2 * pi
+    elif angle > pi:
+        angle -= 2 * pi
     return angle
