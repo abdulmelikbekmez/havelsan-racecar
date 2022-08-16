@@ -6,7 +6,7 @@ HEIGHT = 1024
 
 
 def __get_dist(x_0, y_0, x_1, y_1):
-    return ((x_1 - x_0)**2 + (y_1 - y_0)**2)**.5
+    return ((x_1 - x_0) ** 2 + (y_1 - y_0) ** 2) ** 0.5
 
 
 def __get_neighbour(map, x, y):
@@ -42,17 +42,17 @@ def dijkstra(map, s_x, s_y, g_x, g_y):
     heap = [(0.0, (s_x, s_y))]
 
     while heap:
-        c, (x, y) = hq.heappop(heap)
+        _, (x, y) = hq.heappop(heap)  # type: ignore
         c_base = costs_base[(x, y)]
 
         if c_base > 100:
             g_x, g_y = x, y
             break
 
-        #print(f"popped with elements => {c,x,y}")
+        # print(f"popped with elements => {c,x,y}")
 
         if x == g_x and y == g_y:
-            #print("arrived !!!")
+            # print("arrived !!!")
             break
 
         if (x, y) in visited:
@@ -73,10 +73,10 @@ def dijkstra(map, s_x, s_y, g_x, g_y):
 
                 costs[(n_x, n_y)] = new_cost
                 costs_base[(n_x, n_y)] = base_cost
-                prev[(n_x, n_y)] = (x, y)  #type:ignore
+                prev[(n_x, n_y)] = (x, y)  # type:ignore
 
                 hq.heappush(heap, (new_cost, (n_x, n_y)))
-                #print(f"pushed {(new_cost, (n_x, n_y))}")
+                # print(f"pushed {(new_cost, (n_x, n_y))}")
 
     map[x][y] = 500
 
@@ -88,7 +88,7 @@ def dijkstra(map, s_x, s_y, g_x, g_y):
         current = prev[current]
 
         if current is None:
-            #print("not found")
+            # print("not found")
             return None
     else:
         path.insert(0, (s_x, s_y))

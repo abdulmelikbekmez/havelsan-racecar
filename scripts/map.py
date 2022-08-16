@@ -15,8 +15,9 @@ class Map:
     THICKNESS = 6
 
     def __init__(self):
-        grid = rospy.wait_for_message('/hector/map',
-                                      OccupancyGrid)  # type: (OccupancyGrid)
+        grid = rospy.wait_for_message(
+            "/hector/map", OccupancyGrid
+        )  # type: (OccupancyGrid)
         self.width = grid.info.width
         print("map width => ", self.width)
         self.height = grid.info.height
@@ -25,23 +26,20 @@ class Map:
         print("map resolution => ", self.resolution)
         print("origin => ", grid.info.origin)
         self.saved = False
-        self.map_publisher = rospy.Publisher('/new_map',
-                                             OccupancyGrid,
-                                             queue_size=1)
+        self.map_publisher = rospy.Publisher("/new_map", OccupancyGrid, queue_size=1)
         self.x_max = 0
         self.x_min = 0
         self.y_max = 0
         self.y_min = 0
-                                    
-    
+
     def generate_random_point(self):
         x = rint(self.x_min, self.x_max)
         y = rint(self.y_min, self.y_max)
         # print("x_max = {} - x_min = {} - y_max = {} - y_min = {}".format(self.x_max, self.x_min, self.y_max, self.y_min))
-        
+
         x = (x - (self.width / 2)) * self.resolution
         y = (y - (self.height / 2)) * self.resolution
-        v = Vector(x,y,0)
+        v = Vector(x, y, 0)
         # print("generated point => {}".format(v))
         return v
 
@@ -71,13 +69,12 @@ class Map:
         p.pose.position.y = pos.y
         p.pose.position.z = pos.z
         p.header.frame_id = "hector_map"
-        path.poses.append(p) # type: ignore
+        path.poses.append(p)  # type: ignore
 
     def __map_cb(self, msg):
         # type: (OccupancyGrid) -> None
 
-        data = np.array(msg.data).reshape(
-            (int(self.width), int(self.height))).T
+        data = np.array(msg.data).reshape((int(self.width), int(self.height))).T
 
         data_copy = np.copy(data).flatten()
         indices = np.argwhere(data_copy == 100)
@@ -87,11 +84,13 @@ class Map:
             x = i.item() // self.width
             y = i.item() % self.height
 
-            data_copy[x - self.THICKNESS:x + self.THICKNESS,
-                      y - self.THICKNESS:y + self.THICKNESS] = 100
+            data_copy[
+                x - self.THICKNESS : x + self.THICKNESS,
+                y - self.THICKNESS : y + self.THICKNESS,
+            ] = 100
         self.data = data_copy
 
-        indices = np.argwhere(self.data  == 0)
+        indices = np.argwhere(self.data == 0)
         x_list = [i[0] for i in indices]
         y_list = [i[1] for i in indices]
         self.x_max = max(x_list)
@@ -108,7 +107,4 @@ class Map:
         #     self.saved = True
 
     def subscribe(self):
-        rospy.Subscriber('/hector/map',
-                         OccupancyGrid,
-                         self.__map_cb,
-                         queue_size=1)
+        rospy.Subscriber("/hector/map", OccupancyGrid, self.__map_cb, queue_size=1)

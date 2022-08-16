@@ -68,8 +68,8 @@ class Vector:
     @property
     def angle(self):
         # type: () -> float
-        return np.arctan2(self.y,self.x)  #type:ignore
-    
+        return np.arctan2(self.y, self.x)  #type:ignore
+
     @property
     def length(self):
         # type: () -> float

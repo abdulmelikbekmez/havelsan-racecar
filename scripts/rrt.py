@@ -3,7 +3,7 @@ from utils import normalize_angle
 from node import Node
 from typing import Tuple, Union
 from rospy import Duration
-from geometry_msgs.msg import Vector3, Point
+from geometry_msgs.msg import Vector3
 from visualization_msgs.msg import Marker
 from typing import List, TYPE_CHECKING
 from vector import Vector
@@ -16,7 +16,6 @@ if TYPE_CHECKING:
 
 
 class Route:
-
     def __init__(self, pos, dir):
         # type: (Vector, DirState) -> None
         self.pos = pos
@@ -24,24 +23,22 @@ class Route:
 
 
 class RRT:
-    BIAS = .5
+    BIAS = 0.5
     MAX_ITER_COUNT = 4000
 
     def __init__(self, head_pos, angle):
         # type: (Vector, float) -> None
-        self.head = Node(head_pos,0, angle)
+        self.head = Node(head_pos, 0, angle)
         self.started = False
         self.stop = False
-        self.finded_node = None # type: Union[None, Node]
+        self.finded_node = None  # type: Union[None, Node]
 
         self.random_points = []
 
-
-    
     def __iter__(self):
         self.__iter_list = [self.head]
         return self
-    
+
     def __next__(self):
         if not self.__iter_list:
             raise StopIteration()
@@ -83,8 +80,6 @@ class RRT:
         line_marker.color.a = 1.0
         line_marker.lifetime = Duration(10)
         line_marker.points = []
-
-
 
         random_marker = Marker()
         random_marker.type = Marker.POINTS
@@ -130,7 +125,6 @@ class RRT:
         res = angle * x
         return res, dir_changed
 
-
     def __get_closest_point_from_node_with_max_angle(self, closest_node, random_point):
         # type: (Node, Vector) -> Tuple[Vector, bool]
         direction = random_point - closest_node.pos
@@ -148,7 +142,7 @@ class RRT:
         if bias < self.BIAS:
             return goal
         return map.generate_random_point()
-    
+
     def get_best_parent(self, closest_point, current_parent):
         # type: (Vector, Node) -> Node
         l = [node for node in self if node.is_in_range(closest_point)]
@@ -157,7 +151,7 @@ class RRT:
             if l
             else current_parent
         )
-    
+
     def __rewire(self, possible_parent):
         # type: (Node) -> None
         neighbours = [node for node in self if possible_parent.can_be_child(node)]
@@ -167,31 +161,28 @@ class RRT:
             if new_cost < neighbour.cost:
                 neighbour.update_parent(possible_parent, new_cost)
 
-
-
     def __create_new_node(self, goal, map, path):
         # type: (Vector, Map, Path) -> bool
         """
         Creates new node randomly and returns True if new node is unexpored point
         """
         random_point = self.generate_random_point(map, goal)
-        p =  random_point.generate_point()
-        # print(p)
+        p = random_point.generate_point()
         self.random_points.append(p)
         closest_node = self.__get_closest_node(random_point)
         closest_point, dir_changed = self.__get_closest_point_from_node_with_max_angle(
-            closest_node, random_point)
+            closest_node, random_point
+        )
 
         coord = map.get_map_coord(closest_point)
-        if coord == -1 or coord == 100: 
-            #print("wrong point", coord)
+        if coord == -1 or coord == 100:
+            # print("wrong point", coord)
             return True
-        
+
         parent = self.get_best_parent(closest_point, closest_node)
         child_node = parent.add_child(closest_point, dir_changed)
         self.__rewire(child_node)
         map.add_pos_to_map(path, closest_point)
-        # return map.get_map_coord(closest_point) >= 0
         if not child_node.is_close_enough(goal):
             return True
         else:
@@ -202,7 +193,9 @@ class RRT:
         # type: (Vector, Map, Path) -> List[Route]
         iter_count = 0
 
-        while self.__create_new_node(goal, map, path) and iter_count < self.MAX_ITER_COUNT:
+        while (
+            self.__create_new_node(goal, map, path) and iter_count < self.MAX_ITER_COUNT
+        ):
             iter_count += 1
 
         if iter_count == self.MAX_ITER_COUNT:
