@@ -1,8 +1,9 @@
+from enum import Enum
 from node import DirState
 from vector import Vector
 from geometry_msgs.msg import PoseStamped, PointStamped
 from ackermann_msgs.msg import AckermannDriveStamped
-from utils import normalize_angle
+from utils import normalize_angle, generate_tree_marker
 from visualization_msgs.msg import Marker
 import rospy
 from rrt import RRT, Route
@@ -12,6 +13,12 @@ import numpy as np
 from map import Map
 from math import pi
 
+class CarState(Enum):
+    PLANNING = 0
+    NAVIGATE = 1
+    IDLE = 2
+
+
 
 class Car:
     MAX_ANGLE = 0.3
@@ -20,6 +27,7 @@ class Car:
     def __init__(self, pos, angle):
         # type: (Vector, float) -> None
 
+        self.state = CarState.IDLE
         self.map = Map()
         self.pos = pos
         self.angle = angle
@@ -48,12 +56,6 @@ class Car:
         _, _, yaw = euler_from_quaternion([o.x, o.y, o.z, o.w])
         self.angle = normalize_angle(yaw)
 
-        if self.rrt:
-            points, lines, random = self.rrt.generate_marker()
-            self.pub_marker_lines.publish(lines)
-            self.pub_marker_points.publish(points)
-            self.pub_marker_random_points.publish(random)
-            # self.pub_marker.publish(points)
 
     def __clicked_cb(self, msg):
         # type: (PointStamped) -> None
@@ -62,10 +64,12 @@ class Car:
         if val == 100:
             print("this pos is already obstacle. Try another !!!")
             return
+        self.state = CarState.PLANNING
         self.rrt = RRT(self.pos, self.angle)
         route_list = self.rrt.get_vector_list(clicked_pos, self.map, self.msg_point)
         self.path = route_list
         self.map.set_path(route_list, self.msg_point)
+        self.state = CarState.NAVIGATE
 
     def subscribe(self):
         self.map.subscribe()
@@ -86,6 +90,7 @@ class Car:
 
         if not self.path:
             return
+
 
         route = self.path[0]
         target = route.pos
@@ -109,12 +114,19 @@ class Car:
             self.path.pop(0)
             return
         print("publishing")
-        self.pub.publish(self.msg)
+        # self.pub.publish(self.msg)
 
     def main(self):
 
         while not rospy.is_shutdown():
 
-            self.__navigate()
             # self.pub_point.publish(self.msg_point)
             self.rate.sleep()
+
+            if self.state is CarState.PLANNING and self.rrt:
+                points, lines, random = generate_tree_marker(self.rrt)
+                self.pub_marker_lines.publish(lines)
+                self.pub_marker_points.publish(points)
+                self.pub_marker_random_points.publish(random)
+            elif self.state is CarState.NAVIGATE:
+                self.__navigate()

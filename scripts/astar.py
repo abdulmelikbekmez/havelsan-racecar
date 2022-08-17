@@ -78,7 +78,7 @@ def dijkstra(map, s_x, s_y, g_x, g_y):
                 hq.heappush(heap, (new_cost, (n_x, n_y)))
                 # print(f"pushed {(new_cost, (n_x, n_y))}")
 
-    map[x][y] = 500
+    map[x][y] = 500 # type: ignore
 
     path = []
     current = (g_x, g_y)
