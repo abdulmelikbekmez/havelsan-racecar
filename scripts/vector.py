@@ -61,10 +61,6 @@ class Vector:
 
         raise Exception("Unsupported Operand!!")
 
-    def angle_to(self, other):
-        # type: (Vector) -> float
-        return other.angle - self.angle
-
     @property
     def angle(self):
         # type: () -> float
@@ -74,3 +70,11 @@ class Vector:
     def length(self):
         # type: () -> float
         return (self.x**2 + self.y**2 + self.z**2)**.5
+
+    def angle_to(self, other):
+        # type: (Vector) -> float
+        return other.angle - self.angle
+
+    def dot(self, other):
+        # type: (Vector) -> float
+        return self.x * other.x + self.y * other.y

@@ -1,12 +1,8 @@
 import rospy
 from nav_msgs.msg import OccupancyGrid
 import numpy as np
-from typing import List, TYPE_CHECKING
 from vector import Vector
 from random import randint as rint
-
-if TYPE_CHECKING:
-    from rrt import Route
 
 
 class Map:

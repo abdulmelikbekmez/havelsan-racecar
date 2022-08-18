@@ -28,8 +28,9 @@ class Car:
         self.map = Map()
         self.pos = pos
         self.angle_heading = angle
-        self.rate = rospy.Rate(10)
+        self.rate = rospy.Rate(20)
         self.msg = AckermannDriveStamped()
+        self.msg.drive.acceleration = .1
         self.pub = rospy.Publisher("/ackermann_cmd_mux/input/navigation",
                                    AckermannDriveStamped,
                                    queue_size=1)
@@ -52,7 +53,7 @@ class Car:
         self.pos.update(msg.pose)
         o = msg.pose.orientation
         _, _, yaw = euler_from_quaternion([o.x, o.y, o.z, o.w])
-        self.angle_heading = normalize_angle(yaw)
+        self.angle_heading = float(yaw)
 
     def __clicked_cb(self, msg):
         # type: (PointStamped) -> None

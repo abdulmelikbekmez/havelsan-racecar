@@ -12,10 +12,10 @@ class DirState(Enum):
 
 class Node:
     ID = 0
-    MARGIN_MAX = 0.15
-    MARGIN_MIN = 0.10
+    MARGIN_MAX = 0.25
+    MARGIN_MIN = 0.15
     MAX_ANGLE = pi / 5
-    NEIGHBOUR_MAX = MARGIN_MAX + .2
+    NEIGHBOUR_MAX = MARGIN_MAX + .5
 
     def __init__(self, pos, angle, cost, dir=DirState.FORWARD, parent=None):
         # type: (Vector, float, float, DirState, Union[Node, None]) -> None
@@ -27,21 +27,21 @@ class Node:
         self.id = Node.ID
         Node.ID += 1
         self.cost = cost
-    
+
     @property
     def direction(self):
         # type: () -> Vector
         x = cos(self.angle)
-        y = sin(self.angle) 
-        return Vector(x,y,0)
-    
+        y = sin(self.angle)
+        return Vector(x, y, 0)
+
     def __eq__(self, other):
         # type: (object) -> bool
         if not isinstance(other, Node):
             return False
-        
+
         return other.id == self.id
-    
+
     @classmethod
     def refactor_length(cls, length):
         # type: (float) -> float
@@ -51,7 +51,7 @@ class Node:
             return cls.MARGIN_MIN
         else:
             return length
-    
+
     def can_be_child(self, other):
         # type: (Node) -> bool
         direction = other.pos - self.pos
@@ -72,7 +72,6 @@ class Node:
 
         return True
 
-
     def is_in_range(self, point):
         # type: (Vector) -> bool
         direction = point - self.pos
@@ -83,11 +82,10 @@ class Node:
             return 180 - angle > 180 - self.MARGIN_MAX / 2
         else:
             return angle < self.MAX_ANGLE / 2
-    
+
     def is_close_enough(self, goal_pos):
         # type: (Vector) -> bool
         return (self.pos - goal_pos).length < self.MARGIN_MAX
-
 
     def get_angle_from_child(self, child):
         # type: (Vector) -> float
@@ -112,23 +110,21 @@ class Node:
         child = Node(pos, angle, cost, dir, self)
         self.childs.append(child)
         return child
-    
+
     def update_childs_cost(self):
         for child in self.childs:
             new_cost = (self.pos - child.pos).length
             child.cost = self.cost + new_cost
             child.update_childs_cost()
-    
+
     def update_parent(self, new_parent, new_cost):
         # type: (Node, float) -> None
         if self.parent:
             self.parent.childs.remove(self)
-        
+
         self.parent = new_parent
         self.parent.childs.append(self)
 
         self.angle = self.parent.get_angle_from_child(self.pos)
         self.cost = new_cost
         self.update_childs_cost()
-
-

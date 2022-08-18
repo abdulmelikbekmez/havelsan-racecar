@@ -4,7 +4,6 @@ from node import Node
 from typing import Tuple, Union
 from typing import List, TYPE_CHECKING
 from vector import Vector
-from nav_msgs.msg import Path
 from math import pi
 
 if TYPE_CHECKING:
@@ -21,12 +20,12 @@ class Route:
 
 
 class RRT:
-    BIAS = 0.5
-    MAX_ITER_COUNT = 4000
+    BIAS = 0.05
+    MAX_ITER_COUNT = 1000
 
     def __init__(self, head_pos, angle):
         # type: (Vector, float) -> None
-        self.head = Node(head_pos, 0, angle)
+        self.head = Node(head_pos, angle, 0)
         self.started = False
         self.stop = False
         self.finded_node = None  # type: Union[None, Node]
