@@ -13,11 +13,11 @@ import numpy as np
 from map import Map
 from math import pi
 
+
 class CarState(Enum):
     PLANNING = 0
     NAVIGATE = 1
     IDLE = 2
-
 
 
 class Car:
@@ -34,18 +34,19 @@ class Car:
         self.path = []  # type: list[Route]
         self.rate = rospy.Rate(10)
         self.msg = AckermannDriveStamped()
-        self.pub = rospy.Publisher(
-            "/ackermann_cmd_mux/input/navigation", AckermannDriveStamped, queue_size=1
-        )
-        self.pub_point = rospy.Publisher("/path", Path, queue_size=1)
-        self.msg_point = Path()
-        self.msg_point.header.frame_id = "hector_map"
-        self.pub_marker_points = rospy.Publisher("/marker_point", Marker, queue_size=1)
-        self.pub_marker_lines = rospy.Publisher("/marker_line", Marker, queue_size=1)
+        self.pub = rospy.Publisher("/ackermann_cmd_mux/input/navigation",
+                                   AckermannDriveStamped,
+                                   queue_size=1)
+        self.pub_marker_points = rospy.Publisher("/marker_point",
+                                                 Marker,
+                                                 queue_size=1)
+        self.pub_marker_lines = rospy.Publisher("/marker_line",
+                                                Marker,
+                                                queue_size=1)
 
-        self.pub_marker_random_points = rospy.Publisher(
-            "/random_point", Marker, queue_size=1
-        )
+        self.pub_marker_random_points = rospy.Publisher("/random_point",
+                                                        Marker,
+                                                        queue_size=1)
 
         self.rrt = None
 
@@ -56,30 +57,34 @@ class Car:
         _, _, yaw = euler_from_quaternion([o.x, o.y, o.z, o.w])
         self.angle = normalize_angle(yaw)
 
-
     def __clicked_cb(self, msg):
         # type: (PointStamped) -> None
         clicked_pos = Vector(msg.point.x, msg.point.y, msg.point.z)
-        val = self.map.get_map_coord(clicked_pos)
-        if val == 100:
+        map_value = self.map.get_map_coord(clicked_pos)
+        if map_value == 100:
             print("this pos is already obstacle. Try another !!!")
             return
         self.state = CarState.PLANNING
         self.rrt = RRT(self.pos, self.angle)
-        route_list = self.rrt.get_vector_list(clicked_pos, self.map, self.msg_point)
+        route_list = self.rrt.get_vector_list(
+            clicked_pos,
+            self.map,
+        )
         self.path = route_list
-        self.map.set_path(route_list, self.msg_point)
+        self.map.set_path(route_list)
         self.state = CarState.NAVIGATE
 
     def subscribe(self):
         self.map.subscribe()
 
-        rospy.Subscriber(
-            "/hector/slam_out_pose", PoseStamped, self.__hector_cb, queue_size=1
-        )
-        rospy.Subscriber(
-            "/clicked_point", PointStamped, self.__clicked_cb, queue_size=1
-        )
+        rospy.Subscriber("/hector/slam_out_pose",
+                         PoseStamped,
+                         self.__hector_cb,
+                         queue_size=1)
+        rospy.Subscriber("/clicked_point",
+                         PointStamped,
+                         self.__clicked_cb,
+                         queue_size=1)
 
     def __normalize_angle(self, angle):
         a = np.exp(angle / 2) - 1  # type: ignore
@@ -90,7 +95,6 @@ class Car:
 
         if not self.path:
             return
-
 
         route = self.path[0]
         target = route.pos
@@ -106,21 +110,20 @@ class Car:
         print("nav - angle => ", dif_angle)
 
         self.msg.drive.speed = self.SPEED * route.dir.value
-        self.msg.drive.steering_angle = (
-            self.__normalize_angle(dif_angle) * route.dir.value
-        )
+        self.msg.drive.steering_angle = (self.__normalize_angle(dif_angle) *
+                                         route.dir.value)
 
         if dif.length < 0.20:
             self.path.pop(0)
+            self.map.msg_path.poses.pop(0) if self.map.msg_path.poses else None
             return
         print("publishing")
-        # self.pub.publish(self.msg)
+        self.pub.publish(self.msg)
 
     def main(self):
 
         while not rospy.is_shutdown():
 
-            # self.pub_point.publish(self.msg_point)
             self.rate.sleep()
 
             if self.state is CarState.PLANNING and self.rrt:
@@ -130,3 +133,4 @@ class Car:
                 self.pub_marker_random_points.publish(random)
             elif self.state is CarState.NAVIGATE:
                 self.__navigate()
+                self.map.publish()

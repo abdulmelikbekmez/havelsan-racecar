@@ -15,9 +15,8 @@ class Map:
     THICKNESS = 6
 
     def __init__(self):
-        grid = rospy.wait_for_message(
-            "/hector/map", OccupancyGrid
-        )  # type: (OccupancyGrid)
+        grid = rospy.wait_for_message("/hector/map",
+                                      OccupancyGrid)  # type: (OccupancyGrid)
         self.width = grid.info.width
         print("map width => ", self.width)
         self.height = grid.info.height
@@ -26,7 +25,12 @@ class Map:
         print("map resolution => ", self.resolution)
         print("origin => ", grid.info.origin)
         self.saved = False
-        self.map_publisher = rospy.Publisher("/new_map", OccupancyGrid, queue_size=1)
+        self.map_publisher = rospy.Publisher("/new_map",
+                                             OccupancyGrid,
+                                             queue_size=1)
+        self.pub_path = rospy.Publisher("/path", Path, queue_size=1)
+        self.msg_path = Path()
+        self.msg_path.header.frame_id = "hector_map"
         self.x_max = 0
         self.x_min = 0
         self.y_max = 0
@@ -43,23 +47,25 @@ class Map:
         # print("generated point => {}".format(v))
         return v
 
+    def publish(self):
+        self.pub_path.publish(self.msg_path)
+
     def get_map_coord(self, point):
         # type: (Vector) -> int
         x = int((self.width / 2) + (point.x / self.resolution))
         y = int((self.height / 2) + (point.y / self.resolution))
         return self.data[x][y]
 
-    @staticmethod
-    def set_path(list_vector, path):
-        # type: (List[Route], Path) -> None
-        path.poses = []
+    def set_path(self, list_vector):
+        # type: (List[Route]) -> None
+        self.msg_path.poses = []
         for r in list_vector:
             p = PoseStamped()
             p.pose.position.x = r.pos.x
             p.pose.position.y = r.pos.y
             p.pose.position.z = r.pos.z
             p.header.frame_id = "hector_map"
-            path.poses.append(p)
+            self.msg_path.poses.append(p)
 
     @staticmethod
     def add_pos_to_map(path, pos):
@@ -74,7 +80,8 @@ class Map:
     def __map_cb(self, msg):
         # type: (OccupancyGrid) -> None
 
-        data = np.array(msg.data).reshape((int(self.width), int(self.height))).T
+        data = np.array(msg.data).reshape(
+            (int(self.width), int(self.height))).T
 
         data_copy = np.copy(data).flatten()
         indices = np.argwhere(data_copy == 100)
@@ -84,10 +91,8 @@ class Map:
             x = i.item() // self.width
             y = i.item() % self.height
 
-            data_copy[
-                x - self.THICKNESS : x + self.THICKNESS,
-                y - self.THICKNESS : y + self.THICKNESS,
-            ] = 100
+            data_copy[x - self.THICKNESS:x + self.THICKNESS,
+                      y - self.THICKNESS:y + self.THICKNESS, ] = 100
         self.data = data_copy
 
         indices = np.argwhere(self.data == 0)
@@ -107,4 +112,7 @@ class Map:
         #     self.saved = True
 
     def subscribe(self):
-        rospy.Subscriber("/hector/map", OccupancyGrid, self.__map_cb, queue_size=1)
+        rospy.Subscriber("/hector/map",
+                         OccupancyGrid,
+                         self.__map_cb,
+                         queue_size=1)

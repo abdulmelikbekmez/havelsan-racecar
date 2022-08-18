@@ -37,7 +37,7 @@ def generate_tree_marker(tree):
     line_marker.color.g = 0.0
     line_marker.color.b = 0.0
     line_marker.color.a = 1.0
-    line_marker.lifetime = Duration(10)
+    line_marker.lifetime = Duration(1)
     line_marker.points = []
 
     random_marker = Marker()

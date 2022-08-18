@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 
 class Route:
+
     def __init__(self, pos, dir):
         # type: (Vector, DirState) -> None
         self.pos = pos
@@ -52,10 +53,10 @@ class RRT:
         self.__iter_list.extend(node.childs)
         return node
 
-
     def __get_closest_node(self, to):
         # type: (Vector) -> Node
-        return min([node for node in self], key=lambda node: (node.pos - to).length)
+        return min([node for node in self],
+                   key=lambda node: (node.pos - to).length)
 
     def refactor_angle(self, angle, _):
         # type: (float, Node) -> Tuple[float, bool]
@@ -71,15 +72,18 @@ class RRT:
         res = angle * x
         return res, dir_changed
 
-    def __get_closest_point_from_node_with_max_angle(self, closest_node, random_point):
+    def __get_closest_point_from_node_with_max_angle(self, closest_node,
+                                                     random_point):
         # type: (Node, Vector) -> Tuple[Vector, bool]
         direction = random_point - closest_node.pos
         dif_angle = closest_node.direction.angle_to(direction)
         # print("dif angle", dif_angle)
-        dif_angle_refactored, dir = self.refactor_angle(dif_angle, closest_node)
+        dif_angle_refactored, dir = self.refactor_angle(
+            dif_angle, closest_node)
         # print("dif angle refactored", dif_angle_refactored)
         length = Node.refactor_length(direction.length)
-        v = Vector.from_polar(length, closest_node.angle + dif_angle_refactored)
+        v = Vector.from_polar(length,
+                              closest_node.angle + dif_angle_refactored)
         return closest_node.pos + v, dir
 
     def generate_random_point(self, map, goal):
@@ -92,23 +96,23 @@ class RRT:
     def get_best_parent(self, closest_point, current_parent):
         # type: (Vector, Node) -> Node
         l = [node for node in self if node.is_in_range(closest_point)]
-        return (
-            min(l, key=lambda node: node.cost + (node.pos - closest_point).length)
-            if l
-            else current_parent
-        )
+        return (min(
+            l, key=lambda node: node.cost +
+            (node.pos - closest_point).length) if l else current_parent)
 
     def __rewire(self, possible_parent):
         # type: (Node) -> None
-        neighbours = [node for node in self if possible_parent.can_be_child(node)]
+        neighbours = [
+            node for node in self if possible_parent.can_be_child(node)
+        ]
         for neighbour in neighbours:
             cost = (neighbour.pos - possible_parent.pos).length
             new_cost = possible_parent.cost + cost
             if new_cost < neighbour.cost:
                 neighbour.update_parent(possible_parent, new_cost)
 
-    def __create_new_node(self, goal, map, path):
-        # type: (Vector, Map, Path) -> bool
+    def __create_new_node(self, goal, map):
+        # type: (Vector, Map) -> bool
         """
         Creates new node randomly and returns True if new node is unexpored point
         """
@@ -117,8 +121,7 @@ class RRT:
         self.random_points.append(p)
         closest_node = self.__get_closest_node(random_point)
         closest_point, dir_changed = self.__get_closest_point_from_node_with_max_angle(
-            closest_node, random_point
-        )
+            closest_node, random_point)
 
         coord = map.get_map_coord(closest_point)
         if coord == -1 or coord == 100:
@@ -128,20 +131,18 @@ class RRT:
         parent = self.get_best_parent(closest_point, closest_node)
         child_node = parent.add_child(closest_point, dir_changed)
         self.__rewire(child_node)
-        map.add_pos_to_map(path, closest_point)
         if not child_node.is_close_enough(goal):
             return True
         else:
             self.finded_node = child_node
             return False
 
-    def get_vector_list(self, goal, map, path):
-        # type: (Vector, Map, Path) -> List[Route]
+    def get_vector_list(self, goal, map):
+        # type: (Vector, Map) -> List[Route]
         iter_count = 0
 
-        while (
-            self.__create_new_node(goal, map, path) and iter_count < self.MAX_ITER_COUNT
-        ):
+        while (self.__create_new_node(goal, map)
+               and iter_count < self.MAX_ITER_COUNT):
             iter_count += 1
 
         if iter_count == self.MAX_ITER_COUNT:
