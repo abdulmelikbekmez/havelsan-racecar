@@ -1,17 +1,14 @@
 from enum import Enum
-from node import DirState
+from motionController import MotionController
 from vector import Vector
 from geometry_msgs.msg import PoseStamped, PointStamped
 from ackermann_msgs.msg import AckermannDriveStamped
 from utils import normalize_angle, generate_tree_marker
 from visualization_msgs.msg import Marker
 import rospy
-from rrt import RRT, Route
 from tf.transformations import euler_from_quaternion
-from nav_msgs.msg import Path
-import numpy as np
+from rrt import RRT
 from map import Map
-from math import pi
 
 
 class CarState(Enum):
@@ -30,8 +27,7 @@ class Car:
         self.state = CarState.IDLE
         self.map = Map()
         self.pos = pos
-        self.angle = angle
-        self.path = []  # type: list[Route]
+        self.angle_heading = angle
         self.rate = rospy.Rate(10)
         self.msg = AckermannDriveStamped()
         self.pub = rospy.Publisher("/ackermann_cmd_mux/input/navigation",
@@ -49,13 +45,14 @@ class Car:
                                                         queue_size=1)
 
         self.rrt = None
+        self.motion_controller = MotionController()
 
     def __hector_cb(self, msg):
         # type: (PoseStamped) -> None
         self.pos.update(msg.pose)
         o = msg.pose.orientation
         _, _, yaw = euler_from_quaternion([o.x, o.y, o.z, o.w])
-        self.angle = normalize_angle(yaw)
+        self.angle_heading = normalize_angle(yaw)
 
     def __clicked_cb(self, msg):
         # type: (PointStamped) -> None
@@ -65,13 +62,12 @@ class Car:
             print("this pos is already obstacle. Try another !!!")
             return
         self.state = CarState.PLANNING
-        self.rrt = RRT(self.pos, self.angle)
-        route_list = self.rrt.get_vector_list(
+        self.rrt = RRT(self.pos, self.angle_heading)
+        list_route = self.rrt.get_vector_list(
             clicked_pos,
             self.map,
         )
-        self.path = route_list
-        self.map.set_path(route_list)
+        self.motion_controller.set_path(list_route, self.pos)
         self.state = CarState.NAVIGATE
 
     def subscribe(self):
@@ -86,39 +82,15 @@ class Car:
                          self.__clicked_cb,
                          queue_size=1)
 
-    def __normalize_angle(self, angle):
-        a = np.exp(angle / 2) - 1  # type: ignore
-        # print("angle: " + str(a))
-        return a
-
     def __navigate(self):
 
-        if not self.path:
-            return
-
-        route = self.path[0]
-        target = route.pos
-
-        dir_angle = self.angle if route.dir is DirState.FORWARD else self.angle - pi
-
-        dif = target - self.pos
-        print("direction => ", route.dir)
-        print("nav - remaining length => ", dif.length)
-        dif_angle = dif.angle - dir_angle
-        # dif_angle = refactor_angle2(dif_angle)
-        dif_angle = normalize_angle(dif_angle)
-        print("nav - angle => ", dif_angle)
-
-        self.msg.drive.speed = self.SPEED * route.dir.value
-        self.msg.drive.steering_angle = (self.__normalize_angle(dif_angle) *
-                                         route.dir.value)
-
-        if dif.length < 0.20:
-            self.path.pop(0)
-            self.map.msg_path.poses.pop(0) if self.map.msg_path.poses else None
-            return
-        print("publishing")
+        speed, angle, arrived = self.motion_controller.main(
+            self.pos, self.angle_heading)
+        self.msg.drive.speed = speed
+        self.msg.drive.steering_angle = angle
         self.pub.publish(self.msg)
+        if arrived:
+            self.state = CarState.IDLE
 
     def main(self):
 
@@ -133,4 +105,5 @@ class Car:
                 self.pub_marker_random_points.publish(random)
             elif self.state is CarState.NAVIGATE:
                 self.__navigate()
-                self.map.publish()
+            elif self.state is CarState.IDLE:
+                pass

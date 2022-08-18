@@ -1,10 +1,8 @@
 import rospy
 from nav_msgs.msg import OccupancyGrid
-from geometry_msgs.msg import PoseStamped
 import numpy as np
 from typing import List, TYPE_CHECKING
 from vector import Vector
-from nav_msgs.msg import Path
 from random import randint as rint
 
 if TYPE_CHECKING:
@@ -28,9 +26,6 @@ class Map:
         self.map_publisher = rospy.Publisher("/new_map",
                                              OccupancyGrid,
                                              queue_size=1)
-        self.pub_path = rospy.Publisher("/path", Path, queue_size=1)
-        self.msg_path = Path()
-        self.msg_path.header.frame_id = "hector_map"
         self.x_max = 0
         self.x_min = 0
         self.y_max = 0
@@ -47,35 +42,11 @@ class Map:
         # print("generated point => {}".format(v))
         return v
 
-    def publish(self):
-        self.pub_path.publish(self.msg_path)
-
     def get_map_coord(self, point):
         # type: (Vector) -> int
         x = int((self.width / 2) + (point.x / self.resolution))
         y = int((self.height / 2) + (point.y / self.resolution))
         return self.data[x][y]
-
-    def set_path(self, list_vector):
-        # type: (List[Route]) -> None
-        self.msg_path.poses = []
-        for r in list_vector:
-            p = PoseStamped()
-            p.pose.position.x = r.pos.x
-            p.pose.position.y = r.pos.y
-            p.pose.position.z = r.pos.z
-            p.header.frame_id = "hector_map"
-            self.msg_path.poses.append(p)
-
-    @staticmethod
-    def add_pos_to_map(path, pos):
-        # type: (Path, Vector) -> None
-        p = PoseStamped()
-        p.pose.position.x = pos.x
-        p.pose.position.y = pos.y
-        p.pose.position.z = pos.z
-        p.header.frame_id = "hector_map"
-        path.poses.append(p)  # type: ignore
 
     def __map_cb(self, msg):
         # type: (OccupancyGrid) -> None
