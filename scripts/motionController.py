@@ -1,7 +1,7 @@
 from enum import Enum
-from turtle import pos
 from rrt import Route
 import numpy as np
+from pid import PID
 from vector import Vector
 from node import DirState
 from typing import Union
@@ -28,6 +28,7 @@ class MotionController:
         self.pos_prev = None  # type: Union[None, Vector]
         self.pub_path = Publisher("/path", Path, queue_size=1)
         self.msg_path = Path()
+        self.pid = PID()
         self.msg_path.header.frame_id = "hector_map"
 
     def __get_distance(self, start, finish, position):
@@ -87,8 +88,8 @@ class MotionController:
         # print("angle: " + str(a))
         return min(a, self.ANGLE_MAX)
 
-    def main(self, position, angle_heading):
-        # type: (Vector, float) -> tuple[float, float, bool]
+    def main(self, position, angle_heading, dt):
+        # type: (Vector, float, float) -> tuple[float, float, bool]
         """
         returns speed and angle 
         """
@@ -119,8 +120,10 @@ class MotionController:
 
         print(state)
         print(route.dir)
-        print("distance from path => ",
-              self.__get_distance(self.pos_prev, target, position))
+        dist = self.__get_distance(self.pos_prev, target, position)
+        print("distance from path => ", dist)
+        print("pid output => ", self.pid.output(dist, dt),
+              "current output => ", angle)
         # if state is PathState.FRONT:
         #     self.__pop()
 

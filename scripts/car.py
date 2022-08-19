@@ -20,6 +20,7 @@ class CarState(Enum):
 class Car:
     MAX_ANGLE = 0.3
     SPEED = 0.5
+    RATE = 20.0
 
     def __init__(self, pos, angle):
         # type: (Vector, float) -> None
@@ -28,7 +29,7 @@ class Car:
         self.map = Map()
         self.pos = pos
         self.angle_heading = angle
-        self.rate = rospy.Rate(20)
+        self.rate = rospy.Rate(self.RATE)
         self.msg = AckermannDriveStamped()
         self.msg.drive.acceleration = 0.05
         self.msg.drive.steering_angle_velocity = 0.05
@@ -87,11 +88,13 @@ class Car:
     def __navigate(self):
 
         speed, angle, arrived = self.motion_controller.main(
-            self.pos, self.angle_heading)
+            self.pos, self.angle_heading, 1.0 / self.RATE)
         self.msg.drive.speed = speed
         self.msg.drive.steering_angle = angle
         self.pub.publish(self.msg)
         if arrived:
+            self.msg.drive.speed = 0
+            self.pub.publish(self.msg)
             self.state = CarState.IDLE
 
     def main(self):
