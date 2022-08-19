@@ -19,7 +19,7 @@ class PathState(Enum):
 
 
 class MotionController:
-    SPEED = 0.3
+    SPEED = 0.5
     ANGLE_MAX = pi / 10
 
     def __init__(self):
@@ -118,6 +118,7 @@ class MotionController:
         state = self.__get_state(self.pos_prev, target, position)
 
         print(state)
+        print(route.dir)
         print("distance from path => ",
               self.__get_distance(self.pos_prev, target, position))
         # if state is PathState.FRONT:

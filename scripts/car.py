@@ -30,7 +30,8 @@ class Car:
         self.angle_heading = angle
         self.rate = rospy.Rate(20)
         self.msg = AckermannDriveStamped()
-        self.msg.drive.acceleration = .1
+        self.msg.drive.acceleration = 0.05
+        self.msg.drive.steering_angle_velocity = 0.05
         self.pub = rospy.Publisher("/ackermann_cmd_mux/input/navigation",
                                    AckermannDriveStamped,
                                    queue_size=1)

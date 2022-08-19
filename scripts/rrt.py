@@ -22,6 +22,7 @@ class Route:
 class RRT:
     BIAS = 0.05
     MAX_ITER_COUNT = 1000
+    MARGIN = 5
 
     def __init__(self, head_pos, angle):
         # type: (Vector, float) -> None
@@ -90,14 +91,30 @@ class RRT:
         bias = r()
         if bias < self.BIAS:
             return goal
+
+        x_min = self.head.pos.x - self.MARGIN
+        y_min = self.head.pos.y - self.MARGIN
+        x = x_min + r() * self.MARGIN * 2
+        y = y_min + r() * self.MARGIN * 2
+        return Vector(x, y, 0)
         return map.generate_random_point()
 
-    def get_best_parent(self, closest_point, current_parent):
-        # type: (Vector, Node) -> Node
-        l = [node for node in self if node.is_in_range(closest_point)]
-        return (min(
-            l, key=lambda node: node.cost +
-            (node.pos - closest_point).length) if l else current_parent)
+    def get_best_parent(self, closest_point, current_parent, reversed):
+        # type: (Vector, Node, bool) -> tuple[Node, bool]
+        l = []  # type: list[tuple[Node, bool]]
+        for node in self:
+            in_range, rev = node.is_in_range(closest_point)
+            if in_range:
+                l.append((node, rev))
+
+        if l:
+            return min(l,
+                       key=lambda x: x[0].cost +
+                       (x[0].pos - closest_point).length
+                       if not x[1] else x[0].cost +
+                       (x[0].pos - closest_point).length * 2)
+        else:
+            return current_parent, reversed
 
     def __rewire(self, possible_parent):
         # type: (Node) -> None
@@ -119,7 +136,7 @@ class RRT:
         p = random_point.generate_point()
         self.random_points.append(p)
         closest_node = self.__get_closest_node(random_point)
-        closest_point, dir_changed = self.__get_closest_point_from_node_with_max_angle(
+        closest_point, reversed = self.__get_closest_point_from_node_with_max_angle(
             closest_node, random_point)
 
         coord = map.get_map_coord(closest_point)
@@ -127,8 +144,9 @@ class RRT:
             # print("wrong point", coord)
             return True
 
-        parent = self.get_best_parent(closest_point, closest_node)
-        child_node = parent.add_child(closest_point, dir_changed)
+        parent, reversed = self.get_best_parent(closest_point, closest_node,
+                                                reversed)
+        child_node = parent.add_child(closest_point, reversed)
         self.__rewire(child_node)
         if not child_node.is_close_enough(goal):
             return True

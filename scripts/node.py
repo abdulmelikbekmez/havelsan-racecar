@@ -1,7 +1,6 @@
 from enum import Enum
 import numpy as np
 from math import sin, cos, pi
-from typing import Union, List
 from vector import Vector
 
 
@@ -14,16 +13,16 @@ class Node:
     ID = 0
     MARGIN_MAX = 0.25
     MARGIN_MIN = 0.15
-    MAX_ANGLE = pi / 5
+    MAX_ANGLE = pi / 10
     NEIGHBOUR_MAX = MARGIN_MAX + .5
 
     def __init__(self, pos, angle, cost, dir=DirState.FORWARD, parent=None):
-        # type: (Vector, float, float, DirState, Union[Node, None]) -> None
+        # type: (Vector, float, float, DirState, Node| None) -> None
         self.pos = pos
         self.dir = dir
         self.angle = angle
         self.parent = parent
-        self.childs = []  # type: List[Node]
+        self.childs = []  # type: list[Node]
         self.id = Node.ID
         Node.ID += 1
         self.cost = cost
@@ -73,15 +72,15 @@ class Node:
         return True
 
     def is_in_range(self, point):
-        # type: (Vector) -> bool
+        # type: (Vector) -> tuple[bool, bool]
         direction = point - self.pos
         if direction.length > self.NEIGHBOUR_MAX:
-            return False
+            return False, False
         angle = abs(self.direction.angle_to(direction))
         if angle > 90:
-            return 180 - angle > 180 - self.MARGIN_MAX / 2
+            return 180 - angle > 180 - self.MARGIN_MAX / 2, True
         else:
-            return angle < self.MAX_ANGLE / 2
+            return angle < self.MAX_ANGLE / 2, False
 
     def is_close_enough(self, goal_pos):
         # type: (Vector) -> bool
