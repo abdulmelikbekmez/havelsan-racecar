@@ -1,32 +1,33 @@
 {
-  "configurations": [
-    {
-      "browse": {
-        "databaseFilename": "${default}",
-        "limitSymbolsToIncludedHeaders": false
-      },
-      "includePath": [
-        "/opt/ros/melodic/include/**",
-        "/root/marc/devel/include/**",
-        "/root/marc/src/racecar/ackermann_cmd_mux/include/**",
-        "/root/marc/src/racecar-controllers/marc-examples/bangbang/include/**",
-        "/root/marc/src/hector_slam/hector_geotiff/include/**",
-        "/root/marc/src/hector_slam/hector_map_tools/include/**",
-        "/root/marc/src/hector_slam/hector_mapping/include/**",
-        "/root/marc/src/hector_slam/hector_marker_drawing/include/**",
-        "/root/marc/src/racecar-controllers/marc-examples/openCV/include/**",
-        "/root/marc/src/racecar-controllers/racecar_potential_field_controller/include/**",
-        "/root/marc/src/racecar/sparkfun_9dof_razor_imu_m0/include/**",
-        "/root/marc/src/vesc/vesc_ackermann/include/**",
-        "/root/marc/src/vesc/vesc_driver/include/**",
-        "/usr/include/**"
-      ],
-      "name": "ROS",
-      "intelliSenseMode": "gcc-x64",
-      "compilerPath": "/usr/bin/gcc",
-      "cStandard": "gnu11",
-      "cppStandard": "c++14"
-    }
-  ],
-  "version": 4
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "${default}",
+                "limitSymbolsToIncludedHeaders": false
+            },
+            "includePath": [
+                "/opt/ros/melodic/include/**",
+                "/root/marc/devel/include/**",
+                "/root/marc/src/racecar/ackermann_cmd_mux/include/**",
+                "/root/marc/src/racecar-controllers/marc-examples/bangbang/include/**",
+                "/root/marc/src/hector_slam/hector_geotiff/include/**",
+                "/root/marc/src/hector_slam/hector_map_tools/include/**",
+                "/root/marc/src/hector_slam/hector_mapping/include/**",
+                "/root/marc/src/hector_slam/hector_marker_drawing/include/**",
+                "/root/marc/src/racecar-controllers/marc-examples/openCV/include/**",
+                "/root/marc/src/racecar-controllers/racecar_potential_field_controller/include/**",
+                "/root/marc/src/racecar/sparkfun_9dof_razor_imu_m0/include/**",
+                "/root/marc/src/vesc/vesc_ackermann/include/**",
+                "/root/marc/src/vesc/vesc_driver/include/**",
+                "/usr/include/**",
+                "${workspaceFolder}/include"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "c++14"
+        }
+    ],
+    "version": 4
 }

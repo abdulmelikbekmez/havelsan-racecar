@@ -58,7 +58,8 @@ class Node:
             return False
         angle = self.direction.angle_to(direction)
         angle_abs = abs(angle)
-        if angle_abs > 90 and not 180 - angle_abs > 180 - self.MARGIN_MAX / 2:
+        # if angle_abs > 90 and not 180 - angle_abs > 180 - self.MARGIN_MAX / 2:
+        if angle_abs > pi and not pi * 2 - angle_abs > pi * 2 - self.MARGIN_MAX / 2:
             return False
         elif not angle_abs < self.MAX_ANGLE / 2:
             return False
@@ -77,8 +78,9 @@ class Node:
         if direction.length > self.NEIGHBOUR_MAX:
             return False, False
         angle = abs(self.direction.angle_to(direction))
-        if angle > 90:
-            return 180 - angle > 180 - self.MARGIN_MAX / 2, True
+        if angle > pi:
+            # return 180 - angle > 180 - self.MARGIN_MAX / 2, True
+            return pi * 2 - angle > pi * 2 - self.MARGIN_MAX / 2, True
         else:
             return angle < self.MAX_ANGLE / 2, False
 
@@ -89,7 +91,7 @@ class Node:
     def get_angle_from_child(self, child):
         # type: (Vector) -> float
         direction = child - self.pos
-        return np.arctan2(direction.y, direction.x)  # type: ignore
+        return direction.angle
 
     def add_child(self, pos, dir_changed):
         # type: (Vector, bool) -> Node

@@ -61,6 +61,30 @@ class Vector:
 
         raise Exception("Unsupported Operand!!")
 
+    def __truediv__(self, other):
+        if isinstance(other, Vector):
+            return Vector(self.x / other.x, self.y / other.y, self.z / other.z)
+
+        elif isinstance(other, int) or isinstance(other, float):
+            return Vector(self.x / other, self.y / other, self.z / other)
+
+        raise Exception("Unsupported Operand!!")
+
+    def __div__(self, other):
+        if isinstance(other, Vector):
+            return Vector(self.x / other.x, self.y / other.y, self.z / other.z)
+
+        elif isinstance(other, int) or isinstance(other, float):
+            return Vector(self.x / other, self.y / other, self.z / other)
+
+        raise Exception("Unsupported Operand!!")
+
+    def rotate(self, angle):
+        # type: (float) -> Vector
+        new_angle = self.angle + angle
+        length = self.length
+        return Vector.from_polar(length, new_angle)
+
     @property
     def angle(self):
         # type: () -> float

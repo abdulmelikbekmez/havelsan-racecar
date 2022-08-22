@@ -6,6 +6,7 @@ from rospy import Duration
 if TYPE_CHECKING:
     from rrt import RRT
 
+
 def normalize_angle(angle):
     # type: (float) -> float
     if angle < -pi:
@@ -13,6 +14,7 @@ def normalize_angle(angle):
     elif angle > pi:
         angle -= 2 * pi
     return angle
+
 
 def generate_tree_marker(tree):
     # type: (RRT) -> Tuple[Marker, Marker, Marker]
@@ -50,7 +52,8 @@ def generate_tree_marker(tree):
     random_marker.color.b = 0.0
     random_marker.color.a = 1.0
     random_marker.lifetime = Duration(1)
-    random_marker.points = tree.random_points
+    random_marker.points = []
+    random_marker.points.extend(tree.random_points)
 
     l = [tree.head]
     while l:

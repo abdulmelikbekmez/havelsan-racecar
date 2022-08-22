@@ -1,4 +1,5 @@
 from enum import Enum
+from sys import getsizeof
 from motionController import MotionController
 from vector import Vector
 from geometry_msgs.msg import PoseStamped, PointStamped
@@ -45,7 +46,7 @@ class Car:
 
         self.pub_marker_random_points = rospy.Publisher("/random_point",
                                                         Marker,
-                                                        queue_size=1)
+                                                        queue_size=100)
 
         self.rrt = None
         self.motion_controller = MotionController()
@@ -105,6 +106,9 @@ class Car:
 
             if self.state is CarState.PLANNING and self.rrt:
                 points, lines, random = generate_tree_marker(self.rrt)
+                print("point size => {} line size => {} random size => {}".
+                      format(getsizeof(points), getsizeof(lines),
+                             getsizeof(random)))
                 self.pub_marker_lines.publish(lines)
                 self.pub_marker_points.publish(points)
                 self.pub_marker_random_points.publish(random)
