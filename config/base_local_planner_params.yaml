@@ -1,17 +1,18 @@
 base_local_planner: teb_local_planner/TebLocalPlannerROS
+controller_frequency: 10.0
 
 TebLocalPlannerROS:
-  acc_lim_x: 0.55
-  acc_lim_theta: 1.5
+  acc_lim_x: 1.0 # Maximum translational acceleration of the robot in meters/sec^2
+  acc_lim_theta: 0.2 # Maximum angular acceleration of the robot in radians/sec^2
 
-  max_vel_x: 0.45
+  max_vel_x: 0.5 # Maximum translational velocity of the robot in meters/sec
   max_vel_x_backwards: 0.2
 
-  max_vel_theta: 0.31
+  max_vel_theta: 0.2 # Maximum angular velocity of the robot in radians/sec
 
-  min_turning_radius: 1
+  min_turning_radius: 1.3 # Minimum turning radius of a carlike robot (set to zero for a diff-drive robot).
 
-  wheelbase: 0.25
+  wheelbase: 0.3 # he distance between the rear axle and the front axle.
   cmd_angle_instead_rotvel: true
 
 

@@ -16,7 +16,6 @@ class MoveBase:
                                    AckermannDriveStamped,
                                    queue_size=1)
         self.m = AckermannDriveStamped()
-        self.m.drive.acceleration = 0.5
         self.rate = rospy.Rate(10)
 
     def sub(self):
