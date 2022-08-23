@@ -6,6 +6,7 @@ from tf.transformations import euler_from_quaternion
 from vector import Vector
 from utils import normalize_angle
 from ackermann_msgs.msg import AckermannDriveStamped
+from random import random
 
 
 class MoveBase:
@@ -15,21 +16,29 @@ class MoveBase:
                                    AckermannDriveStamped,
                                    queue_size=1)
         self.m = AckermannDriveStamped()
+        self.m.drive.acceleration = 0.5
+        self.rate = rospy.Rate(10)
 
     def sub(self):
-        rospy.Subscriber("/cmd_vel", Twist, self.main, queue_size=1)
+        rospy.Subscriber("/cmd_vel", Twist, self.__cb, queue_size=1)
 
-    def main(self, msg):
+    def __cb(self, msg):
         # type: (Twist) -> None
         self.m.drive.speed = msg.linear.x
+
         self.m.drive.steering_angle = msg.angular.z
-        self.pub.publish(self.m)
+
+    def main(self):
+        while not rospy.is_shutdown():
+            self.pub.publish(self.m)
+            self.rate.sleep()
 
 
 if __name__ == "__main__":
     rospy.init_node('ilerle', anonymous=True)
     m = MoveBase()
     m.sub()
+    m.main()
     # h_msg = rospy.wait_for_message('/hector/slam_out_pose',
     #                                PoseStamped)  # type: (PoseStamped)
     # o = h_msg.pose.orientation
