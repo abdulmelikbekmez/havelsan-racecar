@@ -1,22 +1,25 @@
 #include "ros/ros.h"
-#include <iostream>
-#include "stajyer/CalculatePath.h"
-#include "new_vector.hpp"
+#include <ackermann_msgs/AckermannDriveStamped.h>
+#include <geometry_msgs/Twist.h>
 
-using namespace stajyer;
+#define CONSTANT 1.15
 
-bool calculatePath(CalculatePathRequest &req, CalculatePathResponse &res)
+ackermann_msgs::AckermannDriveStamped msg_drive;
+ros::Publisher pub;
+
+void callback(const geometry_msgs::TwistConstPtr &msg)
 {
-    return true;
+    msg_drive.drive.speed = msg->linear.x;
+    msg_drive.drive.steering_angle = msg->angular.z * CONSTANT;
+    pub.publish(msg_drive);
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    Vector a{15.2, 2, 3};
-    Vector b{12, 2, 3};
-    Vector c = a + b;
-    std::cout << c.x << std::endl;
-    std::cout << c.y << std::endl;
-    std::cout << c.z << std::endl;
+    ros::init(argc, argv, "ackerman_drive_publisher");
+    ros::NodeHandle n;
+    pub = n.advertise<ackermann_msgs::AckermannDriveStamped>("/ackermann_cmd_mux/input/navigation", 1);
+    ros::Subscriber sub = n.subscribe("/cmd_vel", 1, callback);
+    ros::spin();
     return 0;
 }

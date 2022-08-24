@@ -4,7 +4,7 @@
  <include file="$(find racecar)/launch/includes/racecar-v1/static_transforms.launch.xml" />
 
          <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_frame" 
-        args="-0.1 0.0 0.0 0.0 0.0 0.0 1.0 base_link base_frame" />
+        args="0.0 0.0 0.0 0.0 0.0 0.0 1.0 base_link base_frame" />
 
   <group ns="hector">
     
@@ -39,7 +39,7 @@
       <param name="pub_map_odom_transform" value="true"/>
       <param name="pub_map_scanmatch_transform" value="true"/>
       <param name="map_resolution" value="0.025"/>
-      <param name="map_size" value="1024"/>
+      <param name="map_size" value="2048"/>
       <param name="map_start_x" value="0.5"/>
       <param name="map_start_y" value="0.5" />
       <param name="update_factor_free" value="0.4"/>

@@ -1,5 +1,6 @@
 base_local_planner: teb_local_planner/TebLocalPlannerROS
 controller_frequency: 10.0
+track_unknown_space: true
 
 TebLocalPlannerROS:
   acc_lim_x: 1.0 # Maximum translational acceleration of the robot in meters/sec^2
@@ -14,5 +15,11 @@ TebLocalPlannerROS:
 
   wheelbase: 0.3 # he distance between the rear axle and the front axle.
   cmd_angle_instead_rotvel: true
+
+  dt_hysteresis: 0.05
+  dt_ref: 0.5
+
+  min_obstacle_dist: 0.5
+  inflation_dist: 0.6
 
 

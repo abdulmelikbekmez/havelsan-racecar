@@ -1,9 +1,9 @@
 local_costmap:
   global_frame: hector_map
   robot_base_frame: base_frame
-  update_frequency: 0.2
-  publish_frequency: 0.2
+  update_frequency: 1
+  publish_frequency: 1
   rolling_window: true
-  width: 3.0
-  height: 3.0
+  width: 5.0
+  height: 5.0
   resolution: 0.1

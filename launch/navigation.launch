@@ -15,4 +15,6 @@
     <rosparam file="$(find stajyer)/config/base_local_planner_params.yaml" command="load" />
  </node>
 
+ <node pkg="stajyer" type="node" name="cmd_to_ackermann_publisher"></node>
+
 </launch>         

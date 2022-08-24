@@ -18,6 +18,7 @@
         "core": "cpp",
         "fstream": "cpp",
         "istream": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "*.ipp": "cpp"
     }
 }
